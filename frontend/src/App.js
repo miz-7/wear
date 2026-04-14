@@ -95,8 +95,8 @@ function App() {
         <LocationMarker onMapClick={handleMapClick} />
 
         {/* shopsの中身をループで回してピンを立てる */}
-        {shops && shops.map(shop=> (
-          <Marker key={shop.id} position={[shop.lat, shop.lng]}>
+        {shops.map((shop, idx)=> (
+          <Marker key={idx} position={[shop.lat, shop.lng]}>
             <Popup>
               <strong>{shop.name}</strong><br />
               価格帯: {shop.price}<br />
