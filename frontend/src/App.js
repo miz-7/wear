@@ -28,6 +28,7 @@ function App() {
   // Reactに「このデータは画面表示に関わる大切な状態（State）だよ」と教える関数です。
   // [shops, setShops]: 現在のデータそのもの（読み取り用）。,データを書き換えるための専用関数（更新用）。
   const [shops, setShops] = useState([]); 
+  const [selectedFile, setSelectedFile] = useState(null);
 
   // 【地図の中心点】
   // 富山大学付近の座標を設定
@@ -53,19 +54,36 @@ function App() {
   }, []); // [] は「アプリが立ち上がった時に1回だけ実行する」という意味です
 
   // --- 【2. 地図をクリックした時の処理】 ---
-  const handleMapClick = (latLng) => {
+  const handleMapClick = async(latLng) => {
     const shopName = prompt("お店の名前を入力してください");
-    if (!shopName) return; // 名前が入力されなかったらここで終了
+    if (!shopName) return; // 名前が入力されなかったらここで終了 
 
     const price = prompt("価格帯を入力してください（例：￥￥）");
-    const genre = prompt("系統を入力してください（例：ヴィンテージ）");
+    const genre = prompt("系統を入力してください（例：ヴィンテージ）"); 
+    // 画像アップロードの処理
+    let imageUrl = "";
+    if (selectedFile) {
+      const formData = new FormData(); 
+      formData.append("file", selectedFile);
 
+      try {
+        const res = await fetch('http://127.0.0.1:8000/upload-image', {
+          method: 'POST',
+          body: formData,
+        });
+        const upLoadData = await res.json();
+        imageUrl = upLoadData.url;
+      } catch (err) {
+        console.error("画像送信失敗:", err);
+      }
+    }
     const newShop = { 
       name: shopName,
       lat: latLng.lat, 
       lng: latLng.lng, 
       price: price || "未設定", 
-      genre: genre || "未設定"
+      genre: genre || "未設定",
+      image: imageUrl
   };
     // --- 【追加：Pythonの「箱」に情報を入れる部分】 ---
     // fetchを使って、今度は「データを保存して」とお願いを送ります
