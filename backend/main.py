@@ -1,8 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import json
 import os
+import shutil
 
 app = FastAPI()
 
@@ -13,6 +15,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+#保存先のフォルダを確認（なければ作成)
+UPLOAD_DIR = "uploads"
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
+
+#保存した画像をブラウザから見れるようにする
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name = "uploads")
+
+@app.post("/upload-image")
+async def upload_image(file: UploadFile = File(...)):
+    # 保存する場所とファイル名を決定
+    file_path = os.path.join(UPLOAD_DIR, file.filename)
+
+    # 画像を実際に保存する
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return{"message": "保存", "filename":file.filename, "url":f"/uploads/{file.filename}"}
+
 
 JSON_FILE = "shops.json"
 
