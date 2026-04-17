@@ -105,7 +105,14 @@ function App() {
 
   return (
     <div style={{ height: '100vh', width: '100%' }}>
-      <h1 style={{ textAlign: 'center' }}>富大周辺 古着屋マップ</h1>
+      <h1 style={{ textAlign: 'center' }}></h1>
+      <div style={{ padding: "10px"}}>
+        <p>①画像を選択 → ②地図をクリック</p>
+        <input
+        type="file"
+        onChange={(e) => setSelectedFile(e.target.files[0])}
+        />
+      </div>
       <MapContainer center={position} zoom={15} style={{ height: '90vh', width: '100%' }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         
@@ -119,6 +126,9 @@ function App() {
               <strong>{shop.name}</strong><br />
               価格帯: {shop.price}<br />
               ジャンル: {shop.genre}
+              {shop.image && (
+                <img src={shop.image} alt="shop" style={{ width: "100px"}} />
+              )}
               </Popup>
           </Marker>
         ))}
