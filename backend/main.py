@@ -8,6 +8,7 @@ import shutil
 
 app = FastAPI()
 
+app.mount("/static", StaticFiles(directory="uploads"), name="static")
 # Reactから接続できるようにするための設定
 app.add_middleware(
     CORSMiddleware,
@@ -44,6 +45,7 @@ class Shop(BaseModel):
     lng: float
     price: str
     genre: str
+    image: Optional[str] = None
 
 
 @app.get("/shops") #send for js
