@@ -105,7 +105,7 @@ function App() {
 
   return (
     <div style={{ height: '100vh', width: '100%' }}>
-      <h1 style={{ textAlign: 'center' }}></h1>
+      <h1 style={{ textAlign: 'center' }}>マップ</h1>
       <div style={{ padding: "10px"}}>
         <p>①画像を選択 → ②地図をクリック</p>
         <input
@@ -127,7 +127,11 @@ function App() {
               価格帯: {shop.price}<br />
               ジャンル: {shop.genre}
               {shop.image && (
-                <img src={shop.image} alt="shop" style={{ width: "100px"}} />
+                <img 
+                src={`http://localhost:8000${shop.image}`}
+                alt={shop.name} 
+                style={{ width: "100%", maxWidth: '200px', borderRadius: '8px'}} 
+                />
               )}
               </Popup>
           </Marker>

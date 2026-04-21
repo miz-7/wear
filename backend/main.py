@@ -5,9 +5,12 @@ from pydantic import BaseModel
 import json
 import os
 import shutil
+from typing import Optional
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 app.mount("/static", StaticFiles(directory="uploads"), name="static")
 # Reactから接続できるようにするための設定
 app.add_middleware(
