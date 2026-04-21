@@ -1,47 +1,62 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import json
 import os
 import shutil
-from typing import Optional
-from fastapi.staticfiles import StaticFiles
+from typing import Optional, List
+
+# --- DB用の設定を追加 ---
+from sqlalchemy import create_engine, Column, Integer, String, Float
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, Session
+
+# 1. DBファイルの場所を指定 (sqlite)
+SQLALCHEMY_DATABASE_URL = "sqlite:///./shops.db"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+# 2. テーブルの設計図 (DBの構造)
+class ShopModel(Base):
+    __tablename__ = "shops"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    lat = Column(Float)
+    lng = Column(Float)
+    price = Column(String)
+    genre = Column(String)
+    image = Column(String, nullable=True)
+
+# 3. 実際にDBファイルを作成する
+Base.metadata.create_all(bind=engine)
+
+# DBセッションを取得するための関数
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+# -----------------------
 
 app = FastAPI()
 
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-app.mount("/static", StaticFiles(directory="uploads"), name="static")
-# Reactから接続できるようにするための設定
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"], 
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-#保存先のフォルダを確認（なければ作成)
+# 既存の静的ファイル設定
 UPLOAD_DIR = "uploads"
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
 
-#保存した画像をブラウザから見れるようにする
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name = "uploads")
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-@app.post("/upload-image")
-async def upload_image(file: UploadFile = File(...)):
-    # 保存する場所とファイル名を決定
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    # 画像を実際に保存する
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    return{"message": "保存", "filename":file.filename, "url":f"/uploads/{file.filename}"}
-
-
-JSON_FILE = "shops.json"
-
+# Pydanticモデル (Reactとのやり取り用)
 class Shop(BaseModel):
     name: str
     lat: float
@@ -50,24 +65,35 @@ class Shop(BaseModel):
     genre: str
     image: Optional[str] = None
 
+    class Config:
+        orm_mode = True
 
-@app.get("/shops") #send for js
-def get_shops():
-    # jsonファイルを読み込んで、そのまま返す
-    with open("shops.json", "r", encoding="utf-8") as f:
-        data = json.load(f)
-        return data
+# --- エンドポイントの修正 ---
 
-@app.post("/shops") #given from js
-def add_shop(shop: Shop): #届いたデータを、Shop というルールに通してから、shop という名前の変数に入れて
-    shops = [] #[ ] (リスト)に{ } (オブジェクト/辞書(message))が届くとエラーになる
-    if os.path.exists(JSON_FILE):
-        with open(JSON_FILE, "r", encoding="utf-8") as f:
-            shops = json.load(f)
-    #届いた1軒(shop)を辞書にして、リスト(shops)に追加する
-    shops.append(shop.dict())                                       #r = 読み取り（Read）w = 上書き保存（Write）f = ファイルのあだ名（File）
+@app.post("/upload-image")
+async def upload_image(file: UploadFile = File(...)):
+    file_path = os.path.join(UPLOAD_DIR, file.filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    return {"url": f"/uploads/{file.filename}"}
 
-    with open(JSON_FILE, "w", encoding="utf-8") as f:
-        json.dump(shops, f, indent=4, ensure_ascii=False)          # indent=4 で見やすくし、ensure_ascii=False で日本語を守る
+@app.get("/shops", response_model=List[Shop])
+def get_shops(db: Session = Depends(get_db)):
+    # JSONの代わりにDBから全件取得する
+    return db.query(ShopModel).all()
 
-    return {"message": "保存に成功しました！"}
+@app.post("/shops")
+def add_shop(shop: Shop, db: Session = Depends(get_db)):
+    # JSONへの書き込みの代わりに、DBへ保存する
+    new_shop = ShopModel(
+        name=shop.name,
+        lat=shop.lat,
+        lng=shop.lng,
+        price=shop.price,
+        genre=shop.genre,
+        image=shop.image
+    )
+    db.add(new_shop)
+    db.commit()
+    db.refresh(new_shop)
+    return {"message": "DBに保存成功！"}
