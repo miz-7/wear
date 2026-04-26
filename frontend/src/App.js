@@ -29,6 +29,7 @@ function App() {
   // [shops, setShops]: 現在のデータそのもの（読み取り用）。,データを書き換えるための専用関数（更新用）。
   const [shops, setShops] = useState([]); 
   const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedImg, setselectedImg] = useState(null);
 
   // 【地図の中心点】
   // 富山大学付近の座標を設定
@@ -64,15 +65,15 @@ function App() {
     let imageUrl = "";
     if (selectedFile) {
       const formData = new FormData(); 
-      formData.append("file", selectedFile);
+      formData.append("file", selectedFile); //file:name,selectedfile:中身
 
       try {
         const res = await fetch('http://127.0.0.1:8000/upload-image', {
-          method: 'POST',
-          body: formData,
+          method: 'POST', // ①「送るから登録して！」というモードに切り替え
+          body: formData, // ②「中身はこれだよ！」と実体を渡す
         });
-        const upLoadData = await res.json();
-        imageUrl = upLoadData.url;
+        const upLoadData = await res.json(); //サーバーからの返事を、JavaScriptのオブジェクト（辞書形式）に翻訳
+        imageUrl = upLoadData.url; //upLoadData: 翻訳が終わったデータが入る変数名
       } catch (err) {
         console.error("画像送信失敗:", err);
       }
@@ -129,7 +130,8 @@ function App() {
               {shop.image && (
                 <img 
                 src={`http://localhost:8000${shop.image}`}
-                alt={shop.name} 
+                alt={shop.name}
+                onClick={() => setselectedImg(shop.image)} 
                 style={{ width: "100%", maxWidth: '200px', borderRadius: '8px'}} 
                 />
               )}
@@ -137,6 +139,34 @@ function App() {
           </Marker>
         ))}
       </MapContainer>
+
+      {selectedImg && (
+        <div
+          onClick={() => setselectedImg(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            justifyContent: 'center',
+            zIndex: 9999,
+            cursor: 'zoom-out'
+          }}
+        >
+          <img
+            src={`http://localhost:8000${selectedImg}`}
+            alt="拡大機能"
+            style={{
+              maxWidth: '90%',
+              maxHeight: '90%',
+              borderRadius: '10px',
+              boxShadow: '0 0 20px rgba(255,255,255,0.2)'
+            }}
+          />  
+        </div>
+      )}
     </div>
   );
 }
