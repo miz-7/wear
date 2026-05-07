@@ -122,6 +122,7 @@ function App() {
 
     const price = prompt("価格帯を入力してください（例：￥￥）");
     const genre = prompt("系統を入力してください（例：ヴィンテージ）");
+    const comment = prompt("コメント");
 
     let imageUrl = "";
     if (selectedFile) {
@@ -146,6 +147,7 @@ function App() {
       lng: latLng.lng, 
       price: price || "未設定", 
       genre: genre || "未設定",
+      comment: comment || "",
       image: imageUrl // 画像パスを追加
     };
 
@@ -193,6 +195,11 @@ function App() {
               <strong>{shop.name}</strong><br />
               価格帯: {shop.price}<br />
               ジャンル: {shop.genre}<br />
+              {shop.comment && (
+              <div style={{ marginTop: '5px', fontStyle: 'italic', color: '#555' }}>
+              💬 {shop.comment}
+              </div>
+              )}
               {shop.image && (
                 <img 
                   src={`http://localhost:8000${shop.image}`}
