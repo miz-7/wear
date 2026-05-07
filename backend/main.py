@@ -27,6 +27,7 @@ class ShopModel(Base):
     price = Column(String)
     genre = Column(String)
     image = Column(String, nullable=True)
+    comment = Column (String, nullable=True)
 
 # 3. 実際にDBファイルを作成する
 Base.metadata.create_all(bind=engine)
@@ -64,6 +65,7 @@ class Shop(BaseModel):
     price: str
     genre: str
     image: Optional[str] = None
+    comment: Optional[str] = None
 
     class Config:
         orm_mode = True
