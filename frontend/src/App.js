@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import './App.css';///
+
 
 // Leafletのアイコンバグ修正
 delete L.Icon.Default.prototype._getIconUrl;
@@ -28,6 +30,8 @@ function App() {
   // Reactに「このデータは画面表示に関わる大切な状態（State）だよ」と教える関数です。
   // [shops, setShops]: 現在のデータそのもの（読み取り用）。,データを書き換えるための専用関数（更新用）。
   const [shops, setShops] = useState([]); 
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);///
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedImg, setselectedImg] = useState(null);
 
@@ -55,11 +59,13 @@ function App() {
   }, []); // [] は「アプリが立ち上がった時に1回だけ実行する」という意味です
 
   // --- 【2. 地図をクリックした時の処理】 ---
-  const handleMapClick = async(latLng) => {
+  const handleMapClick = (latLng) => {
     const shopName = prompt("お店の名前を入力してください");
-    if (!shopName) return; // 名前が入力されなかったらここで終了 
+    if (!shopName) return; // 名前が入力されなかったらここで終了
 
     const price = prompt("価格帯を入力してください（例：￥￥）");
+    const genre = prompt("系統を入力してください（例：ヴィンテージ）");
+
     const genre = prompt("系統を入力してください（例：ヴィンテージ）"); 
     // 画像アップロードの処理
     let imageUrl = "";
@@ -83,8 +89,7 @@ function App() {
       lat: latLng.lat, 
       lng: latLng.lng, 
       price: price || "未設定", 
-      genre: genre || "未設定",
-      image: imageUrl
+      genre: genre || "未設定"
   };
     // --- 【追加：Pythonの「箱」に情報を入れる部分】 ---
     // fetchを使って、今度は「データを保存して」とお願いを送ります
@@ -104,8 +109,40 @@ function App() {
 
   }; // ここまでが handleMapClick の範囲
 
+  //メニューボタン
+  const SideMenu = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+  return (
+    <>
+      <div onClick={onClose} className="menu-overlay" />
+      <div className="side-menu">
+        <div className="menu-header">
+          <h3>メニュー</h3>
+          <button onClick={onClose} className="close-button">×</button>
+        </div>
+        <ul className="menu-list">
+          <li className="menu-item">ショップ一覧</li>
+          <li className="menu-item">お気に入り</li>
+          <li className="menu-item">設定</li>
+        </ul>
+      </div>
+    </>
+  );
+};
+
+function App() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const position = [36.699, 137.190];
+};
+
   return (
     <div style={{ height: '100vh', width: '100%' }}>
+      <h1 style={{ textAlign: 'center' }}>富大周辺 古着屋マップ</h1>
+
+      <button onClick={() => setIsMenuOpen(true)} className="menu-button">
+      ☰ メニュー
+      </button>
+
       <h1 style={{ textAlign: 'center' }}>マップ</h1>
       <div style={{ padding: "10px"}}>
         <p>①画像を選択 → ②地図をクリック</p>
@@ -140,6 +177,8 @@ function App() {
         ))}
       </MapContainer>
 
+      <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+
       {selectedImg && (
         <div
           onClick={() => setselectedImg(null)}
@@ -171,4 +210,4 @@ function App() {
   );
 }
 
-export default App;
+export default App
