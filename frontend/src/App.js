@@ -32,6 +32,8 @@ function App() {
   const [shops, setShops] = useState([]); 
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);///
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedImg, setselectedImg] = useState(null);
 
   // 【地図の中心点】
   // 富山大学付近の座標を設定
@@ -64,6 +66,24 @@ function App() {
     const price = prompt("価格帯を入力してください（例：￥￥）");
     const genre = prompt("系統を入力してください（例：ヴィンテージ）");
 
+    const genre = prompt("系統を入力してください（例：ヴィンテージ）"); 
+    // 画像アップロードの処理
+    let imageUrl = "";
+    if (selectedFile) {
+      const formData = new FormData(); 
+      formData.append("file", selectedFile); //file:name,selectedfile:中身
+
+      try {
+        const res = await fetch('http://127.0.0.1:8000/upload-image', {
+          method: 'POST', // ①「送るから登録して！」というモードに切り替え
+          body: formData, // ②「中身はこれだよ！」と実体を渡す
+        });
+        const upLoadData = await res.json(); //サーバーからの返事を、JavaScriptのオブジェクト（辞書形式）に翻訳
+        imageUrl = upLoadData.url; //upLoadData: 翻訳が終わったデータが入る変数名
+      } catch (err) {
+        console.error("画像送信失敗:", err);
+      }
+    }
     const newShop = { 
       name: shopName,
       lat: latLng.lat, 
@@ -123,6 +143,14 @@ function App() {
       ☰ メニュー
       </button>
 
+      <h1 style={{ textAlign: 'center' }}>マップ</h1>
+      <div style={{ padding: "10px"}}>
+        <p>①画像を選択 → ②地図をクリック</p>
+        <input
+        type="file"
+        onChange={(e) => setSelectedFile(e.target.files[0])}
+        />
+      </div>
       <MapContainer center={position} zoom={15} style={{ height: '90vh', width: '100%' }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         
@@ -136,6 +164,14 @@ function App() {
               <strong>{shop.name}</strong><br />
               価格帯: {shop.price}<br />
               ジャンル: {shop.genre}
+              {shop.image && (
+                <img 
+                src={`http://localhost:8000${shop.image}`}
+                alt={shop.name}
+                onClick={() => setselectedImg(shop.image)} 
+                style={{ width: "100%", maxWidth: '200px', borderRadius: '8px'}} 
+                />
+              )}
               </Popup>
           </Marker>
         ))}
@@ -143,6 +179,33 @@ function App() {
 
       <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
+      {selectedImg && (
+        <div
+          onClick={() => setselectedImg(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            justifyContent: 'center',
+            zIndex: 9999,
+            cursor: 'zoom-out'
+          }}
+        >
+          <img
+            src={`http://localhost:8000${selectedImg}`}
+            alt="拡大機能"
+            style={{
+              maxWidth: '90%',
+              maxHeight: '90%',
+              borderRadius: '10px',
+              boxShadow: '0 0 20px rgba(255,255,255,0.2)'
+            }}
+          />  
+        </div>
+      )}
     </div>
   );
 }
