@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import React, { useEffect, useState, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './App.css';
+import { MdMyLocation } from 'react-icons/md';
 
 // Leafletのアイコンバグ修正
 delete L.Icon.Default.prototype._getIconUrl;
@@ -34,7 +35,7 @@ const SideMenu = ({ isOpen, onClose }) => {
           <button onClick={onClose} className="close-button">×</button>
         </div>
         <ul className="menu-list">
-          <li className="menu-item">ショップ一覧</li>
+          <li className="menu-item">マイショップ一覧</li>
           <li className="menu-item">お気に入り</li>
           <li className="menu-item">設定</li>
         </ul>
@@ -43,6 +44,54 @@ const SideMenu = ({ isOpen, onClose }) => {
   );
 };
 
+// --- ここに追加（App関数の外） ---
+function CurrentLocationButton() {
+  const map = useMap(); // これで地図を操る「コントローラー」をゲット
+
+  const buttonRef = useRef(null);
+
+  useEffect(() => {
+    if (buttonRef.current) {
+      L.DomEvent.disableClickPropagation(buttonRef.current);
+    }
+  }, []);
+
+
+  const handleLocationClick = () => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        map.setView([latitude, longitude], 15, { animate: true });
+      },
+      () => alert("位置情報を許可してください")
+    );
+  };
+
+  return (
+    <button
+      ref={buttonRef}
+      onClick={handleLocationClick}
+      style={{
+        position: 'absolute',
+        bottom: '20px',
+        right: '20px',
+        zIndex: 1000,
+        width: '50px',
+        height: '50px',
+        borderRadius: '50%',
+        backgroundColor: 'white',
+        border: 'none',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+        cursor: 'pointer',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      <MdMyLocation size={32} color="#4285F4" />
+    </button>
+  );
+}
 function App() {
   const [shops, setShops] = useState([]); 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -131,8 +180,13 @@ function App() {
         />
       </div>
 
+      
+
       <MapContainer center={position} zoom={15} style={{ height: '80vh', width: '100%' }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+        <CurrentLocationButton/>
+
         <LocationMarker onMapClick={handleMapClick} />
 
         {shops.map((shop, idx)=> (
