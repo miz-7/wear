@@ -35,6 +35,7 @@ const SideMenu = ({ isOpen, onClose }) => {
           <button onClick={onClose} className="close-button">×</button>
         </div>
         <ul className="menu-list">
+          <li className="menu-item">新着投稿</li>
           <li className="menu-item">マイショップ一覧</li>
           <li className="menu-item">お気に入り</li>
           <li className="menu-item">設定</li>
