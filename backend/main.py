@@ -93,7 +93,8 @@ def add_shop(shop: Shop, db: Session = Depends(get_db)):
         lng=shop.lng,
         price=shop.price,
         genre=shop.genre,
-        image=shop.image
+        image=shop.image,
+        comment=shop.comment
     )
     db.add(new_shop)
     db.commit()
