@@ -25,7 +25,7 @@ function LocationMarker({ onMapClick }) {
 
 
 // サイドメニューのコンポーネント
-const SideMenu = ({ isOpen, onClose, shops, onShopClick}) => {
+const SideMenu = ({ isOpen, onClose, shops, onShopClick, onOpenNews}) => {
   if (!isOpen) return null;
   
   return (
@@ -37,7 +37,12 @@ const SideMenu = ({ isOpen, onClose, shops, onShopClick}) => {
           <button onClick={onClose} className="close-button">×</button>
         </div>
         <ul className="menu-list">
-          <li className="menu-item">新着投稿</li>
+          <li className="menu-item"
+          onClick={() => {
+            onOpenNews();
+            onClose();
+          }}
+          >新着投稿</li>
           <li className="menu-item">マイショップ一覧</li>
           <li className="menu-item">お気に入り</li>
           <li className="menu-item">設定</li>
@@ -46,6 +51,45 @@ const SideMenu = ({ isOpen, onClose, shops, onShopClick}) => {
     </>
   );
 };
+
+const NewsPanel = ({ isOpen, onClose, shops }) => {
+  if (!isOpen) return null;
+
+  const latestShops = [...shops].slice(-5).reverse();
+
+  return (
+    <>
+      <div onClick={onClose} className="menu-overlay" />
+      <div className="side-menu">
+        <div className="menu-header">
+          <h3>新着投稿</h3>
+          <button onClick={onClose} className="close-button">×</button>
+        </div>
+
+        <ul className="menu-list">
+          {latestShops.length === 0 ? (
+            <li className="menu-item">まだ投稿がありません</li>
+          ) : (
+            latestShops.map((shop, index) => (
+              <li key={index} className="menu-item">
+                <strong>{shop.name}</strong><br />
+                価格帯: {shop.price}<br />
+                ジャンル: {shop.genre}
+                {shop.comment && (
+                  <>
+                    <br/>
+                    コメント: {shop.comment}
+                  </>
+                )}
+              </li>
+            ))
+          )}
+        </ul>
+      </div>
+    </>
+  );
+};
+
 
 // --- ここに追加（App関数の外） ---
 function CurrentLocationButton() {
@@ -98,6 +142,7 @@ function CurrentLocationButton() {
 function App() {
   const [shops, setShops] = useState([]); 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isNewsOpen, setIsNewsOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedImg, setselectedImg] = useState(null);
 
@@ -216,7 +261,17 @@ function App() {
         ))}
       </MapContainer>
 
-      <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+      <SideMenu
+       isOpen={isMenuOpen}
+       onClose={() => setIsMenuOpen(false)}
+       onOpenNews={() => setIsNewsOpen(true)} 
+       />
+
+      <NewsPanel
+       isOpen={isNewsOpen}
+       onClose={() => setIsNewsOpen(false)}
+       shops={shops}
+      />
 
       {selectedImg && (
         <div
