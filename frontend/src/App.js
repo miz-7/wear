@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import React, { useEffect, useState, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import './App.css';
+import { MdMyLocation } from 'react-icons/md';
 
 // Leafletのアイコンバグ修正
 delete L.Icon.Default.prototype._getIconUrl;
@@ -15,52 +17,113 @@ L.Icon.Default.mergeOptions({
 function LocationMarker({ onMapClick }) {
   useMapEvents({
     click(e) {
-      onMapClick(e.latlng); // 「クリックした時の情報(e)をちょうだい」
-                            // 「その中から緯度経度(latlng)を取り出して、親に渡すね」
+      onMapClick(e.latlng);
     }
   });
   return null;
 }
 
-function App() {
-  // 【バケツの準備】
-  // バックエンドから受け取った「お店のリスト」を保存しておくための変数です
-  // Reactに「このデータは画面表示に関わる大切な状態（State）だよ」と教える関数です。
-  // [shops, setShops]: 現在のデータそのもの（読み取り用）。,データを書き換えるための専用関数（更新用）。
-  const [shops, setShops] = useState([]); 
-  const [selectedFile, setSelectedFile] = useState(null);
+// サイドメニューのコンポーネント
+const SideMenu = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+  return (
+    <>
+      <div onClick={onClose} className="menu-overlay" />
+      <div className="side-menu">
+        <div className="menu-header">
+          <h3>メニュー</h3>
+          <button onClick={onClose} className="close-button">×</button>
+        </div>
+        <ul className="menu-list">
+          <li className="menu-item">マイショップ一覧</li>
+          <li className="menu-item">お気に入り</li>
+          <li className="menu-item">設定</li>
+        </ul>
+      </div>
+    </>
+  );
+};
 
-  // 【地図の中心点】
-  // 富山大学付近の座標を設定
+// --- ここに追加（App関数の外） ---
+function CurrentLocationButton() {
+  const map = useMap(); // これで地図を操る「コントローラー」をゲット
+
+  const buttonRef = useRef(null);
+
+  useEffect(() => {
+    if (buttonRef.current) {
+      L.DomEvent.disableClickPropagation(buttonRef.current);
+    }
+  }, []);
+
+
+  const handleLocationClick = () => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        map.setView([latitude, longitude], 15, { animate: true });
+      },
+      () => alert("位置情報を許可してください")
+    );
+  };
+
+  return (
+    <button
+      ref={buttonRef}
+      onClick={handleLocationClick}
+      style={{
+        position: 'absolute',
+        bottom: '20px',
+        right: '20px',
+        zIndex: 1000,
+        width: '50px',
+        height: '50px',
+        borderRadius: '50%',
+        backgroundColor: 'white',
+        border: 'none',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+        cursor: 'pointer',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      <MdMyLocation size={32} color="#4285F4" />
+    </button>
+  );
+}
+function App() {
+  const [shops, setShops] = useState([]); 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedImg, setselectedImg] = useState(null);
+
+  // 富山大学付近の座標
   const position = [36.692, 137.187]; 
 
-  // --- 【1. バックエンドから情報を「もらう」部分】 ---
+  // バックエンドから情報を取得
   useEffect(() => {
-    // fetchを使って、FastAPIのURL（8000番）に「データをください」とリクエストを送ります
-    fetch('http://127.0.0.1:8000/shops') // main.py get(/shops) connect
-      .then(response => response.json()) // 届いたデータをプログラムで使える形（JSON）に変換-> message
+    fetch('http://127.0.0.1:8000/shops')
+      .then(response => response.json())
       .then(data => {
-        console.log("バックエンドから届いたデータ:", data);
-        
-        // リスト（[]）の時だけバケツに入れる、というルールを徹底する
         if (data && Array.isArray(data)) {
           setShops(data); 
         } else {
-          console.error("リストじゃないデータが届きました:", data);
-          setShops([]); // リストじゃなければ空っぽにしてエラーを防ぐ
+          setShops([]);
         }
       })
       .catch(error => console.error('通信に失敗しました:', error));
-  }, []); // [] は「アプリが立ち上がった時に1回だけ実行する」という意味です
+  }, []);
 
-  // --- 【2. 地図をクリックした時の処理】 ---
-  const handleMapClick = async(latLng) => {
+  // 地図クリック時の処理
+  const handleMapClick = async (latLng) => {
     const shopName = prompt("お店の名前を入力してください");
-    if (!shopName) return; // 名前が入力されなかったらここで終了 
+    if (!shopName) return;
 
     const price = prompt("価格帯を入力してください（例：￥￥）");
-    const genre = prompt("系統を入力してください（例：ヴィンテージ）"); 
-    // 画像アップロードの処理
+    const genre = prompt("系統を入力してください（例：ヴィンテージ）");
+    const comment = prompt("コメント");
+
     let imageUrl = "";
     if (selectedFile) {
       const formData = new FormData(); 
@@ -77,66 +140,98 @@ function App() {
         console.error("画像送信失敗:", err);
       }
     }
+
     const newShop = { 
       name: shopName,
       lat: latLng.lat, 
       lng: latLng.lng, 
       price: price || "未設定", 
       genre: genre || "未設定",
-      image: imageUrl
-  };
-    // --- 【追加：Pythonの「箱」に情報を入れる部分】 ---
-    // fetchを使って、今度は「データを保存して」とお願いを送ります
+      comment: comment || "",
+      image: imageUrl // 画像パスを追加
+    };
+
     fetch('http://127.0.0.1:8000/shops', {
-      method: 'POST', // 「送る」という意味
-      headers: { 'Content-Type': 'application/json' }, // 「荷物の中身はJSONだよ」と教える
-      body: JSON.stringify(newShop) // 荷物を文字に変換して送る
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newShop)
     })
-    .then(response => response.json())  //#pythonが無事に保存し終わって、保存したよという返事が戻ってきた後の処理
+    .then(response => response.json())
     .then(data => {
-      console.log("保存した結果:", data);
-      // ここでバケツを更新！ (handleMapClickの関数の中に書くのが正解) 
       setShops((prevShops) => [...prevShops, newShop]);
-      alert("データベースに保存しました！（リロードしても消えません）");
+      alert("データベースに保存しました！");
     })
     .catch(error => console.error('保存に失敗しました:', error));
-
-  }; // ここまでが handleMapClick の範囲
+  };
 
   return (
     <div style={{ height: '100vh', width: '100%' }}>
-      <h1 style={{ textAlign: 'center' }}>マップ</h1>
-      <div style={{ padding: "10px"}}>
-        <p>①画像を選択 → ②地図をクリック</p>
+      <h1 style={{ textAlign: 'center' }}>富大周辺 古着屋マップ</h1>
+
+      <button onClick={() => setIsMenuOpen(true)} className="menu-button">
+        ☰ メニュー
+      </button>
+
+      <div style={{ padding: "10px", textAlign: 'center' }}>
+        <p>①画像を選択 → ②地図をクリックしてお店を登録</p>
         <input
-        type="file"
-        onChange={(e) => setSelectedFile(e.target.files[0])}
+          type="file"
+          onChange={(e) => setSelectedFile(e.target.files[0])}
         />
       </div>
-      <MapContainer center={position} zoom={15} style={{ height: '90vh', width: '100%' }}>
+
+      
+
+      <MapContainer center={position} zoom={15} style={{ height: '80vh', width: '100%' }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        
-        {/* 地図クリックを監視する部品を設置。handleMapClickを渡す */}
+
+        <CurrentLocationButton/>
+
         <LocationMarker onMapClick={handleMapClick} />
 
-        {/* shopsの中身をループで回してピンを立てる */}
         {shops.map((shop, idx)=> (
           <Marker key={idx} position={[shop.lat, shop.lng]}>
             <Popup>
               <strong>{shop.name}</strong><br />
               価格帯: {shop.price}<br />
-              ジャンル: {shop.genre}
+              ジャンル: {shop.genre}<br />
+              {shop.comment && (
+              <div style={{ marginTop: '5px', fontStyle: 'italic', color: '#555' }}>
+              💬 {shop.comment}
+              </div>
+              )}
               {shop.image && (
                 <img 
-                src={`http://localhost:8000${shop.image}`}
-                alt={shop.name} 
-                style={{ width: "100%", maxWidth: '200px', borderRadius: '8px'}} 
+                  src={`http://localhost:8000${shop.image}`}
+                  alt={shop.name}
+                  onClick={() => setselectedImg(shop.image)} 
+                  style={{ width: "100%", maxWidth: '200px', borderRadius: '8px', cursor: 'pointer'}} 
                 />
               )}
-              </Popup>
+            </Popup>
           </Marker>
         ))}
       </MapContainer>
+
+      <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+
+      {selectedImg && (
+        <div
+          onClick={() => setselectedImg(null)}
+          style={{
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex', justifyContent: 'center', alignItems: 'center',
+            zIndex: 9999, cursor: 'zoom-out'
+          }}
+        >
+          <img
+            src={`http://localhost:8000${selectedImg}`}
+            alt="拡大表示"
+            style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: '10px' }}
+          />  
+        </div>
+      )}
     </div>
   );
 }
