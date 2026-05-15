@@ -23,9 +23,11 @@ function LocationMarker({ onMapClick }) {
   return null;
 }
 
+
 // サイドメニューのコンポーネント
-const SideMenu = ({ isOpen, onClose }) => {
+const SideMenu = ({ isOpen, onClose, shops, onShopClick}) => {
   if (!isOpen) return null;
+  
   return (
     <>
       <div onClick={onClose} className="menu-overlay" />
@@ -35,6 +37,7 @@ const SideMenu = ({ isOpen, onClose }) => {
           <button onClick={onClose} className="close-button">×</button>
         </div>
         <ul className="menu-list">
+          <li className="menu-item">新着投稿</li>
           <li className="menu-item">マイショップ一覧</li>
           <li className="menu-item">お気に入り</li>
           <li className="menu-item">設定</li>
