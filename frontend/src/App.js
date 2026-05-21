@@ -89,6 +89,19 @@ const NewsPanel = ({ isOpen, onClose, shops }) => {
                     コメント: {shop.comment}
                   </>
                 )}
+                {shop.image && (
+                <img
+                  src={"http://localhost:8000" + shop.image}
+                  alt={shop.name}
+                  style={{
+                    width: "100%",
+                    maxWidth: "180px",
+                    marginTop: "8px",
+                    borderRadius: "8px",
+                    display: "block"
+                  }}
+                />
+                )}
               </li>
             ))
           )}
@@ -98,7 +111,7 @@ const NewsPanel = ({ isOpen, onClose, shops }) => {
   );
 };
 
-const ShopListPanel = ({ isOpen, onClose, shops }) => {
+const ShopListPanel = ({ isOpen, onClose, shops, onImageClick }) => {
   if (!isOpen) return null;
 
   return (
@@ -112,7 +125,7 @@ const ShopListPanel = ({ isOpen, onClose, shops }) => {
 
         <ul className="menu-list">
           {shops.length === 0 ? (
-            <li className="menu-item">まだ投稿がありませ遠</li>
+            <li className="menu-item">まだ投稿がありません</li>
           ) : (
             shops.map((shop, index) => (
               <li key={index} className="menu-item">
@@ -124,6 +137,21 @@ const ShopListPanel = ({ isOpen, onClose, shops }) => {
                     <br />
                     コメント: {shop.comment}
                   </>
+                )}
+
+                {shop.image && (
+                  <img
+                    src={`http://localhost:8000${shop.image}`}
+                    alt={shop.name}
+                    onClick={() => onImageClick(shop.image)}
+                    style={{
+                      width: "100%",
+                      maxWidth: "180px",
+                      marginTop: "8px",
+                      borderRadius: "8px",
+                      display: "block"
+                    }}
+                  />
                 )}
               </li>
             ))
@@ -324,6 +352,7 @@ function App() {
        isOpen={isShopListOpen}
        onClose={() => setIsShopListOpen(false)}
        shops={shops}
+       onImageClick={(image) => setselectedImg(image)}
       />
 
       {selectedImg && (
