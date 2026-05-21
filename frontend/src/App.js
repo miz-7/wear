@@ -60,7 +60,7 @@ const SideMenu = ({ isOpen, onClose, shops, onShopClick, onOpenNews, onOpenShopL
   );
 };
 
-const NewsPanel = ({ isOpen, onClose, shops }) => {
+const NewsPanel = ({ isOpen, onClose, shops, onImageClick }) => {
   if (!isOpen) return null;
 
   const latestShops = [...shops].slice(-5).reverse();
@@ -93,6 +93,7 @@ const NewsPanel = ({ isOpen, onClose, shops }) => {
                 <img
                   src={"http://localhost:8000" + shop.image}
                   alt={shop.name}
+                  onClick={() => onImageClick(shop.image)}
                   style={{
                     width: "100%",
                     maxWidth: "180px",
@@ -346,6 +347,7 @@ function App() {
        isOpen={isNewsOpen}
        onClose={() => setIsNewsOpen(false)}
        shops={shops}
+       onImageClick={(image) => setselectedImg(image)}
       />
 
       <ShopListPanel
