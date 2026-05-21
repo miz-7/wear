@@ -23,6 +23,16 @@ function LocationMarker({ onMapClick }) {
   return null;
 }
 
+const genreOptions = [
+  "ヴィンテージ",
+  "ストリート",
+  "カジュアル",
+  "モード",
+  "韓国系",
+  "アメカジ",
+  "その他"
+];
+
 
 // サイドメニューのコンポーネント
 const SideMenu = ({ isOpen, onClose, shops, onShopClick, onOpenNews, onOpenShopList}) => {
@@ -124,7 +134,7 @@ const ShopListPanel = ({ isOpen, onClose, shops, onImageClick }) => {
           ) : (
             shops.map((shop, index) => (
               <li key={index} className="menu-item">
-                <strong>{shops.name}</strong><br />
+                <strong>{shop.name}</strong><br />
                 価格帯: {shop.price}<br />
                 ジャンル: {shop.genre}<br />
                 {shop.comment && (
@@ -133,7 +143,7 @@ const ShopListPanel = ({ isOpen, onClose, shops, onImageClick }) => {
                     コメント: {shop.comment}
                   </>
                 )}
-
+ 
                 {shop.image && (
                   <img
                     src={`http://localhost:8000${shop.image}`}
@@ -208,6 +218,8 @@ function App() {
   const [isNewsOpen, setIsNewsOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedImg, setselectedImg] = useState(null);
+  const [pendingShop, setPendingShop] = useState(null);
+  const [isGenreSelectOpen, setIsGenreSelectOpen] = useState(false);
 
   // 富山大学付近の座標
   const position = [36.692, 137.187]; 
@@ -232,7 +244,6 @@ function App() {
     if (!shopName) return;
 
     const price = prompt("価格帯を入力してください（例：￥￥）");
-    const genre = prompt("系統を入力してください（例：ヴィンテージ）");
     const comment = prompt("コメント");
 
     let imageUrl = "";
@@ -252,28 +263,42 @@ function App() {
       }
     }
 
-    const newShop = { 
+    const baseShop = { 
       name: shopName,
       lat: latLng.lat, 
       lng: latLng.lng, 
       price: price || "未設定", 
-      genre: genre || "未設定",
       comment: comment || "",
-      image: imageUrl // 画像パスを追加
+      image: imageUrl
     };
 
-    fetch('http://127.0.0.1:8000/shops', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newShop)
-    })
-    .then(response => response.json())
-    .then(data => {
-      setShops((prevShops) => [...prevShops, newShop]);
-      alert("データベースに保存しました！");
-    })
-    .catch(error => console.error('保存に失敗しました:', error));
+    setPendingShop(baseShop);
+    setIsGenreSelectOpen(true)
   };
+
+  const handleGenreSelect = (genre) => {
+      if (!pendingShop) return;
+
+      const newShop = {
+        ...pendingShop,
+        genre: genre
+      };
+
+      fetch('http://127.0.0.1:8000/shops', {
+        method: "POST",
+        headers: {"Content-Type" : "application/json" },
+        body: JSON.stringify(newShop)
+      })
+      .then(response => response.json())
+      .then(data => {
+        setShops((prevShops) => [...prevShops, newShop]);
+        setPendingShop(null);
+        setIsGenreSelectOpen(false);
+        alert("データベースに保存しました");
+      })
+      .catch(error => console.error("保存に失敗しました", error));
+    };
+    
 
   return (
     <div style={{ height: '100vh', width: '100%' }}>
@@ -344,6 +369,38 @@ function App() {
        shops={shops}
        onImageClick={(image) => setselectedImg(image)}
       />
+
+      {isGenreSelectOpen && (
+        <div className="menu-overlay">
+          <div className="side-menu">
+            <div className="menu-header">
+              <h3>系統を選択</h3>
+              <button
+                onClick={() => {
+                 setIsGenreSelectOpen(false);
+                 setPendingShop(null);
+                }}
+                className="close-button"
+              >
+               ×
+              </button>
+           </div>
+
+           <div className="genre-button-list">
+             {genreOptions.map((genre) => (
+                <button
+                  key={genre}
+                 className="genre-button"
+                 onClick={() => handleGenreSelect(genre)}
+               >
+                  {genre}
+                </button>
+              ))}
+           </div>
+          </div>
+       </div>
+      )}
+
 
       {selectedImg && (
         <div
