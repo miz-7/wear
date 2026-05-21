@@ -94,13 +94,7 @@ const NewsPanel = ({ isOpen, onClose, shops, onImageClick }) => {
                   src={"http://localhost:8000" + shop.image}
                   alt={shop.name}
                   onClick={() => onImageClick(shop.image)}
-                  style={{
-                    width: "100%",
-                    maxWidth: "180px",
-                    marginTop: "8px",
-                    borderRadius: "8px",
-                    display: "block"
-                  }}
+                  className="list-shop-image"
                 />
                 )}
               </li>
@@ -145,13 +139,7 @@ const ShopListPanel = ({ isOpen, onClose, shops, onImageClick }) => {
                     src={`http://localhost:8000${shop.image}`}
                     alt={shop.name}
                     onClick={() => onImageClick(shop.image)}
-                    style={{
-                      width: "100%",
-                      maxWidth: "180px",
-                      marginTop: "8px",
-                      borderRadius: "8px",
-                      display: "block"
-                    }}
+                    className="list-shop-image"
                   />
                 )}
               </li>
