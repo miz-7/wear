@@ -25,7 +25,7 @@ function LocationMarker({ onMapClick }) {
 
 
 // サイドメニューのコンポーネント
-const SideMenu = ({ isOpen, onClose, shops, onShopClick, onOpenNews}) => {
+const SideMenu = ({ isOpen, onClose, shops, onShopClick, onOpenNews, onOpenShopList}) => {
   if (!isOpen) return null;
   
   return (
@@ -43,7 +43,15 @@ const SideMenu = ({ isOpen, onClose, shops, onShopClick, onOpenNews}) => {
             onClose();
           }}
           >新着投稿</li>
-          <li className="menu-item">マイショップ一覧</li>
+          <li 
+            className="menu-item"
+            onClick={()=> {
+              onOpenShopList();
+              onClose();
+            }}
+          >
+            マイショップ一覧
+          </li>
           <li className="menu-item">お気に入り</li>
           <li className="menu-item">設定</li>
         </ul>
@@ -89,6 +97,43 @@ const NewsPanel = ({ isOpen, onClose, shops }) => {
     </>
   );
 };
+
+const ShopListPanel = ({ isOpen, onClose, shops }) => {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div onClick={onClose} className="menu-overlay" />
+      <div className="side-menu">
+        <div className="menu-header">
+          <h3>マイショップ一覧</h3>
+          <button onClick={onClose} className="close-button">×</button>
+        </div>
+
+        <ul className="menu-list">
+          {shops.length === 0 ? (
+            <li className="menu-item">まだ投稿がありませ遠</li>
+          ) : (
+            shops.map((shop, index) => (
+              <li key={index} className="menu-item">
+                <strong>{shops.name}</strong><br />
+                価格帯: {shop.price}<br />
+                ジャンル: {shop.genre}<br />
+                {shop.comment && (
+                  <>
+                    <br />
+                    コメント: {shop.comment}
+                  </>
+                )}
+              </li>
+            ))
+          )}
+        </ul>
+      </div>
+    </>
+  );
+};
+            
 
 
 // --- ここに追加（App関数の外） ---
@@ -142,6 +187,7 @@ function CurrentLocationButton() {
 function App() {
   const [shops, setShops] = useState([]); 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isShopListOpen, setIsShopListOpen] = useState(false);
   const [isNewsOpen, setIsNewsOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedImg, setselectedImg] = useState(null);
@@ -265,11 +311,18 @@ function App() {
        isOpen={isMenuOpen}
        onClose={() => setIsMenuOpen(false)}
        onOpenNews={() => setIsNewsOpen(true)} 
+       onOpenShopList={() => setIsShopListOpen(true)}
        />
 
       <NewsPanel
        isOpen={isNewsOpen}
        onClose={() => setIsNewsOpen(false)}
+       shops={shops}
+      />
+
+      <ShopListPanel
+       isOpen={isShopListOpen}
+       onClose={() => setIsShopListOpen(false)}
        shops={shops}
       />
 
