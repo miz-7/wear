@@ -127,3 +127,41 @@
 .list-shop-image:hover {
   opacity: 0.85;
 }
+
+.side-menu {
+  width: 320px;
+  max-width: 85vw;
+  box-sizing: border-box;
+}
+
+.menu-header {
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+}
+
+.menu-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 16px;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+}
+
+.menu-item {
+  padding: 14px 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  line-height: 1.5;
+  border-radius: 6px;
+}
+
+.menu-item:hover {
+  background-color: #f7f7f7;
+}
+
+.menu-item strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 15px;
+  color: #222;
+}
