@@ -207,3 +207,63 @@
   border: 1px solid #ddd;
   border-radius: 8px;
 }
+
+.auth-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: bold;
+}
+
+.auth-form input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.auth-submit-button,
+.auth-switch-button,
+.auth-status button {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.auth-switch-button {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.auth-menu-section {
+  margin-bottom: 16px;
+  display: grid;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.auth-menu-title {
+  margin: 0;
+  font-weight: bold;
+}
+
+.auth-menu-button {
+  width: 100%;
+}
+
+.auth-status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 12px;
+}
+
