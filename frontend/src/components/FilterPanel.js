@@ -1,6 +1,6 @@
 import { genreOptions } from '../constants/genreOptions';
 
-function GenreFilterPanel({ 
+function GenreFilterPanel({
   isOpen,
   onClose,
   selectedGenre,
@@ -9,33 +9,29 @@ function GenreFilterPanel({
   maxPrice,
   onChangeMinPrice,
   onChangeMaxPrice,
-  shops}) {
+  shops,
+}) {
   if (!isOpen) return null;
 
   const filterGenres = ["すべて", ...genreOptions];
 
   const filteredShops = shops.filter((shop) => {
-  const genreMatch =
-    selectedGenre === "すべて" || shop.genre === selectedGenre;
+    const genreMatch =
+      selectedGenre === "すべて" || shop.genre === selectedGenre;
+    const price = Number(shop.price);
+    const priceIsValid = !Number.isNaN(price);
+    const minMatch = minPrice === "" || (priceIsValid && price >= Number(minPrice));
+    const maxMatch = maxPrice === "" || (priceIsValid && price <= Number(maxPrice));
 
-  const price = Number(shop.price);
-
-  const minMatch =
-    minPrice === "" || price >= Number(minPrice);
-
-  const maxMatch =
-    maxPrice === "" || price <= Number(maxPrice);
-
-  return genreMatch && minMatch && maxMatch;
-});
-
+    return genreMatch && minMatch && maxMatch;
+  });
 
   return (
     <>
       <div onClick={onClose} className="menu-overlay" />
       <div className="side-menu">
         <div className="menu-header">
-          <h3>ジャンル絞り込み</h3>
+          <h3>絞り込み</h3>
           <button onClick={onClose} className="close-button">×</button>
         </div>
 
@@ -72,7 +68,6 @@ function GenreFilterPanel({
             />
           </label>
         </div>
-
 
         <ul className="menu-list">
           {filteredShops.length === 0 ? (
