@@ -1,14 +1,34 @@
 import { genreOptions } from '../constants/genreOptions';
 
-function GenreFilterPanel({ isOpen, onClose, selectedGenre, onSelectGenre, shops }) {
+function GenreFilterPanel({ 
+  isOpen,
+  onClose,
+  selectedGenre,
+  onSelectGenre,
+  minPrice,
+  maxPrice,
+  onChangeMinPrice,
+  onChangeMaxPrice,
+  shops}) {
   if (!isOpen) return null;
 
   const filterGenres = ["すべて", ...genreOptions];
 
-  const filteredShops =
-    selectedGenre === "すべて"
-      ? shops
-      : shops.filter((shop) => shop.genre === selectedGenre);
+  const filteredShops = shops.filter((shop) => {
+  const genreMatch =
+    selectedGenre === "すべて" || shop.genre === selectedGenre;
+
+  const price = Number(shop.price);
+
+  const minMatch =
+    minPrice === "" || price >= Number(minPrice);
+
+  const maxMatch =
+    maxPrice === "" || price <= Number(maxPrice);
+
+  return genreMatch && minMatch && maxMatch;
+});
+
 
   return (
     <>
@@ -30,6 +50,29 @@ function GenreFilterPanel({ isOpen, onClose, selectedGenre, onSelectGenre, shops
             </button>
           ))}
         </div>
+
+        <div className="price-filter-area">
+          <label>
+            最低価格
+            <input
+              type="number"
+              value={minPrice}
+              onChange={(e) => onChangeMinPrice(e.target.value)}
+              placeholder="例: 1000"
+            />
+          </label>
+
+          <label>
+            最高価格
+            <input
+              type="number"
+              value={maxPrice}
+              onChange={(e) => onChangeMaxPrice(e.target.value)}
+              placeholder="例: 5000"
+            />
+          </label>
+        </div>
+
 
         <ul className="menu-list">
           {filteredShops.length === 0 ? (
