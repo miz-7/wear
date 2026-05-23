@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import ShopModel
+from app.models import ShopModel, UserModel
+from app.routers.auth import get_current_user
 from app.schemas import Shop
 
 router = APIRouter(prefix="/shops", tags=["shops"])
@@ -16,7 +17,11 @@ def get_shops(db: Session = Depends(get_db)):
 
 
 @router.post("")
-def add_shop(shop: Shop, db: Session = Depends(get_db)):
+def add_shop(
+    shop: Shop,
+    current_user: UserModel = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     new_shop = ShopModel(
         name=shop.name,
         lat=shop.lat,

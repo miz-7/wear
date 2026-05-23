@@ -2,7 +2,10 @@ FROM python:3.11
 
 WORKDIR /app
 
-RUN pip install fastapi uvicorn sqlalchemy python-multipart
+RUN pip install fastapi uvicorn sqlalchemy python-multipart passlib[bcrypt] python-jose[cryptography] bcrypt==4.0.1
+
+
+
 
 COPY . .
 

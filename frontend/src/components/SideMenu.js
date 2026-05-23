@@ -1,4 +1,13 @@
-function SideMenu({ isOpen, onClose, onOpenNews, onOpenShopList, onOpenGenreFilter }) {
+function SideMenu({
+  isOpen,
+  onClose,
+  currentUser,
+  onOpenAuth,
+  onLogout,
+  onOpenNews,
+  onOpenShopList,
+  onOpenGenreFilter,
+}) {
   if (!isOpen) return null;
 
   return (
@@ -9,6 +18,37 @@ function SideMenu({ isOpen, onClose, onOpenNews, onOpenShopList, onOpenGenreFilt
           <h3>メニュー</h3>
           <button onClick={onClose} className="close-button">×</button>
         </div>
+
+        <div className="auth-menu-section">
+          {currentUser ? (
+            <>
+              <p className="auth-menu-title">{currentUser.username} でログイン中</p>
+              <button
+                className="auth-submit-button auth-menu-button"
+                onClick={() => {
+                  onLogout();
+                  onClose();
+                }}
+              >
+                ログアウト
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="auth-menu-title">アカウント</p>
+              <button
+                className="auth-submit-button auth-menu-button"
+                onClick={() => {
+                  onOpenAuth();
+                  onClose();
+                }}
+              >
+                ログイン / 新規登録
+              </button>
+            </>
+          )}
+        </div>
+
         <ul className="menu-list">
           <li
             className="menu-item"
