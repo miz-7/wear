@@ -75,7 +75,7 @@ function SideMenu({
               onClose();
             }}
           >
-            ジャンル絞り込み
+            絞り込み
           </li>
           <li className="menu-item">お気に入り</li>
           <li className="menu-item">設定</li>
