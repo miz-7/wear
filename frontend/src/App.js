@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -13,6 +13,7 @@ import CurrentLocationButton from "./components/CurrentLocationButton";
 import LocationMarker from "./components/LocationMarker";
 import ImageModal from "./components/ImageModal";
 import AuthPanel from "./components/AuthPanel";
+import { genreOptions } from "./constants/genreOptions";
 
 // Leafletのアイコンバグ修正
 delete L.Icon.Default.prototype._getIconUrl;
@@ -40,12 +41,13 @@ function App() {
   const [pendingShop, setPendingShop] = useState(null);
 
   const [selectedGenre, setSelectedGenre] = useState("すべて");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
 
-  // 富山大学付近
+  const mapSectionRef = useRef(null);
   const position = [36.692, 137.187];
 
-  // 店一覧を取得
   useEffect(() => {
     fetch("http://localhost:8000/shops")
       .then((response) => response.json())
@@ -59,7 +61,6 @@ function App() {
       .catch((error) => console.error("通信に失敗しました:", error));
   }, []);
 
-  // ログイン状態を確認
   useEffect(() => {
     fetch("http://localhost:8000/auth/me", {
       credentials: "include",
@@ -76,7 +77,6 @@ function App() {
       .catch(() => setCurrentUser(null));
   }, []);
 
-  // 地図クリック時
   const handleMapClick = async (latLng) => {
     if (!currentUser) {
       setIsAuthOpen(true);
@@ -122,7 +122,6 @@ function App() {
     setIsGenreSelectOpen(true);
   };
 
-  // ジャンルを選んだあとに保存
   const handleGenreSelect = (genre) => {
     if (!pendingShop || !currentUser) return;
 
@@ -147,7 +146,6 @@ function App() {
       .catch((error) => console.error("保存に失敗しました:", error));
   };
 
-  // ログアウト
   const handleLogout = async () => {
     await fetch("http://localhost:8000/auth/logout", {
       method: "POST",
@@ -157,84 +155,224 @@ function App() {
     setCurrentUser(null);
   };
 
-  // ジャンル絞り込み
-  const filteredShops =
-    selectedGenre === "すべて"
-      ? shops
-      : shops.filter((shop) => shop.genre === selectedGenre);
+  const scrollToMap = () => {
+    mapSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const filteredShops = shops.filter((shop) => {
+    const genreMatch =
+      selectedGenre === "すべて" || shop.genre === selectedGenre;
+    const priceNumber = Number(shop.price);
+    const priceIsValid = !Number.isNaN(priceNumber);
+    const minMatch = minPrice === "" || (priceIsValid && priceNumber >= Number(minPrice));
+    const maxMatch = maxPrice === "" || (priceIsValid && priceNumber <= Number(maxPrice));
+
+    return genreMatch && minMatch && maxMatch;
+  });
+
+  const latestShops = [...shops].slice(-3).reverse();
+  const trendShops = [...shops].slice(-5).reverse();
 
   return (
-    <div style={{ height: "100vh", width: "100%" }}>
-      <h1 style={{ textAlign: "center" }}>富大周辺 古着屋マップ</h1>
+    <div className="app-shell">
+      <header className="top-nav">
+        <button className="brand-button" onClick={scrollToMap} type="button">
+          <span className="brand-mark">W</span>
+          <span>Wear Map</span>
+        </button>
 
-      <button onClick={() => setIsMenuOpen(true)} className="menu-button">
-        ☰ メニュー
-      </button>
+        <nav className="nav-links" aria-label="メインメニュー">
+          <button onClick={scrollToMap} type="button">ホーム</button>
+          <button onClick={() => setIsNewsOpen(true)} type="button">新着</button>
+          <button onClick={() => setIsGenreFilterOpen(true)} type="button">カテゴリ</button>
+          <button onClick={() => setIsShopListOpen(true)} type="button">ショップ</button>
+        </nav>
 
-      <div style={{ padding: "10px", textAlign: "center" }}>
-        {currentUser ? (
-          <>
-            <p>①画像を選択 → ②地図をクリックしてお店を登録</p>
-            <input
-              type="file"
-              onChange={(e) => setSelectedFile(e.target.files[0])}
-            />
-          </>
-        ) : (
-          <p>地図は誰でも閲覧できます。投稿するにはログインしてください。</p>
-        )}
-      </div>
+        <div className="nav-actions">
+          {currentUser ? (
+            <>
+              <span className="user-chip">{currentUser.username}</span>
+              <button className="ghost-button" onClick={handleLogout} type="button">ログアウト</button>
+            </>
+          ) : (
+            <button className="ghost-button" onClick={() => setIsAuthOpen(true)} type="button">
+              ログイン
+            </button>
+          )}
+          <button onClick={() => setIsMenuOpen(true)} className="primary-button small" type="button">
+            メニュー
+          </button>
+        </div>
+      </header>
 
-      <MapContainer
-        center={position}
-        zoom={15}
-        style={{ height: "80vh", width: "100%" }}
-      >
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <main>
+        <section className="hero-section">
+          <p className="hero-label">富山大学周辺 古着コミュニティ</p>
+          <h1>
+            古着屋をもっと
+            <span>気軽に、リアルに</span>
+          </h1>
+          <p className="hero-copy">
+            気になる古着屋を写真つきで投稿。ジャンル・価格・地図から、今日行きたい一軒を見つけよう。
+          </p>
 
-        <CurrentLocationButton />
+          <div className="hero-actions">
+            <button className="primary-button" onClick={scrollToMap} type="button">マップを見る</button>
+            <button className="secondary-button" onClick={() => setIsNewsOpen(true)} type="button">
+              最新の投稿を見る
+            </button>
+          </div>
+        </section>
 
-        <LocationMarker onMapClick={handleMapClick} />
+        <section className="category-strip" aria-label="ジャンル一覧">
+          <button
+            className={selectedGenre === "すべて" ? "category-chip active" : "category-chip"}
+            onClick={() => setSelectedGenre("すべて")}
+            type="button"
+          >
+            すべて <span>{shops.length}</span>
+          </button>
+          {genreOptions.map((genre) => {
+            const count = shops.filter((shop) => shop.genre === genre).length;
+            return (
+              <button
+                key={genre}
+                className={selectedGenre === genre ? "category-chip active" : "category-chip"}
+                onClick={() => setSelectedGenre(genre)}
+                type="button"
+              >
+                {genre} <span>{count}</span>
+              </button>
+            );
+          })}
+        </section>
 
-        {filteredShops.map((shop, idx) => (
-          <Marker key={idx} position={[shop.lat, shop.lng]}>
-            <Popup>
-              <strong>{shop.name}</strong>
-              <br />
-              価格帯: {shop.price}
-              <br />
-              ジャンル: {shop.genre}
-              <br />
+        <section className="content-grid" ref={mapSectionRef}>
+          <article className="map-panel">
+            <div className="panel-header">
+              <div>
+                <p className="section-kicker">Map</p>
+                <h2>富大周辺 古着屋マップ</h2>
+              </div>
+              <button className="secondary-button compact" onClick={() => setIsGenreFilterOpen(true)} type="button">
+                絞り込み
+              </button>
+            </div>
 
-              {shop.comment && (
-                <div
-                  style={{
-                    marginTop: "5px",
-                    fontStyle: "italic",
-                    color: "#555",
-                  }}
-                >
-                  💬 {shop.comment}
+            <div className="upload-panel">
+              {currentUser ? (
+                <label className="file-label">
+                  投稿画像を選択
+                  <input
+                    type="file"
+                    onChange={(e) => setSelectedFile(e.target.files[0])}
+                  />
+                </label>
+              ) : (
+                <div>
+                  <strong>投稿するにはログインが必要です</strong>
+                  <p>地図はログインなしで見られます。</p>
                 </div>
               )}
+            </div>
 
-              {shop.image && (
-                <img
-                  src={`http://localhost:8000${shop.image}`}
-                  alt={shop.name}
-                  onClick={() => setSelectedImg(shop.image)}
-                  style={{
-                    width: "100%",
-                    maxWidth: "200px",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                  }}
-                />
-              )}
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+            <div className="map-frame">
+              <MapContainer center={position} zoom={15} className="map-container">
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+                <CurrentLocationButton />
+                <LocationMarker onMapClick={handleMapClick} />
+
+                {filteredShops.map((shop, idx) => (
+                  <Marker key={idx} position={[shop.lat, shop.lng]}>
+                    <Popup>
+                      <div className="popup-card">
+                        <strong>{shop.name}</strong>
+                        <span>価格帯: {shop.price}</span>
+                        <span>ジャンル: {shop.genre}</span>
+
+                        {shop.comment && <p>{shop.comment}</p>}
+
+                        {shop.image && (
+                          <img
+                            src={`http://localhost:8000${shop.image}`}
+                            alt={shop.name}
+                            onClick={() => setSelectedImg(shop.image)}
+                            className="popup-image"
+                          />
+                        )}
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+          </article>
+
+          <aside className="side-column">
+            <section className="ranking-card">
+              <div className="panel-header compact-header">
+                <div>
+                  <p className="section-kicker">New</p>
+                  <h2>新着投稿</h2>
+                </div>
+              </div>
+
+              <div className="review-list">
+                {latestShops.length === 0 ? (
+                  <p className="empty-text">まだ投稿がありません</p>
+                ) : (
+                  latestShops.map((shop, index) => (
+                    <button
+                      key={`${shop.name}-${index}`}
+                      className="review-card"
+                      onClick={() => shop.image && setSelectedImg(shop.image)}
+                      type="button"
+                    >
+                      <div className="review-thumb">
+                        {shop.image ? (
+                          <img src={`http://localhost:8000${shop.image}`} alt={shop.name} />
+                        ) : (
+                          <span>No Image</span>
+                        )}
+                      </div>
+                      <div>
+                        <strong>{shop.name}</strong>
+                        <span>{shop.genre || "ジャンル未設定"}</span>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </section>
+
+            <section className="ranking-card">
+              <div className="panel-header compact-header">
+                <div>
+                  <p className="section-kicker">Trend</p>
+                  <h2>注目ショップ</h2>
+                </div>
+              </div>
+
+              <ol className="trend-list">
+                {trendShops.length === 0 ? (
+                  <li className="empty-text">投稿を待っています</li>
+                ) : (
+                  trendShops.map((shop, index) => (
+                    <li key={`${shop.name}-trend-${index}`}>
+                      <span>{index + 1}</span>
+                      <div>
+                        <strong>{shop.name}</strong>
+                        <small>{shop.price} / {shop.genre}</small>
+                      </div>
+                    </li>
+                  ))
+                )}
+              </ol>
+            </section>
+          </aside>
+        </section>
+      </main>
 
       <SideMenu
         isOpen={isMenuOpen}
@@ -266,6 +404,10 @@ function App() {
         onClose={() => setIsGenreFilterOpen(false)}
         selectedGenre={selectedGenre}
         onSelectGenre={(genre) => setSelectedGenre(genre)}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        onChangeMinPrice={(price) => setMinPrice(price)}
+        onChangeMaxPrice={(price) => setMaxPrice(price)}
         shops={shops}
       />
 
@@ -284,10 +426,7 @@ function App() {
         onLoginSuccess={(user) => setCurrentUser(user)}
       />
 
-      <ImageModal
-        image={selectedImg}
-        onClose={() => setSelectedImg(null)}
-      />
+      <ImageModal image={selectedImg} onClose={() => setSelectedImg(null)} />
     </div>
   );
 }
