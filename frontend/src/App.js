@@ -7,7 +7,7 @@ import LocationMarker from './components/LocationMarker';
 import SideMenu from './components/SideMenu';
 import NewsPanel from './components/NewsPanel';
 import ShopListPanel from './components/ShopListPanel';
-import GenreFilterPanel from './components/GenreFilterPanel';
+import FilterPanel from './components/FilterPanel';
 import GenreSelectPanel from './components/GenreSelectPanel';
 import CurrentLocationButton from './components/CurrentLocationButton';
 import ImageModal from './components/ImageModal';
@@ -31,8 +31,10 @@ function App() {
   const [isGenreSelectOpen, setIsGenreSelectOpen] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState("すべて");
   const [isGenreFilterOpen, setIsGenreFilterOpen] = useState(false);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
 
-  // 富山大学付近の座標
+
   const position = [36.692, 137.187];
 
   // バックエンドから情報を取得
@@ -184,13 +186,21 @@ function App() {
         onImageClick={(image) => setselectedImg(image)}
       />
 
-      <GenreFilterPanel
-        isOpen={isGenreFilterOpen}
-        onClose={() => setIsGenreFilterOpen(false)}
-        selectedGenre={selectedGenre}
-        onSelectGenre={(genre) => setSelectedGenre(genre)}
-        shops={shops}
-      />
+     <FilterPanel
+      isOpen={isGenreFilterOpen}
+      onClose={() => setIsGenreFilterOpen(false)}
+      selectedGenre={selectedGenre}
+      onSelectGenre={(genre) => setSelectedGenre(genre)}
+      minPrice={minPrice}
+      maxPrice={maxPrice}
+      onChangeMinPrice={(price) => setMinPrice(price)}
+      onChangeMaxPrice={(price) => setMaxPrice(price)}
+      shops={shops}
+     />
+
+
+
+
 
       <GenreSelectPanel
         isOpen={isGenreSelectOpen}
