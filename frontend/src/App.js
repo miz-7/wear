@@ -13,7 +13,6 @@ import CurrentLocationButton from "./components/CurrentLocationButton";
 import LocationMarker from "./components/LocationMarker";
 import ImageModal from "./components/ImageModal";
 import AuthPanel from "./components/AuthPanel";
-import { genreOptions } from "./constants/genreOptions";
 
 // Leafletのアイコンバグ修正
 delete L.Icon.Default.prototype._getIconUrl;
@@ -178,14 +177,12 @@ function App() {
       <header className="top-nav">
         <button className="brand-button" onClick={scrollToMap} type="button">
           <span className="brand-mark">W</span>
-          <span>Wear Map</span>
+          <span>Wear App</span>
         </button>
 
         <nav className="nav-links" aria-label="メインメニュー">
           <button onClick={scrollToMap} type="button">ホーム</button>
           <button onClick={() => setIsNewsOpen(true)} type="button">新着</button>
-          <button onClick={() => setIsGenreFilterOpen(true)} type="button">カテゴリ</button>
-          <button onClick={() => setIsShopListOpen(true)} type="button">ショップ</button>
         </nav>
 
         <div className="nav-actions">
@@ -207,7 +204,7 @@ function App() {
 
       <main>
         <section className="hero-section">
-          <p className="hero-label">富山大学周辺 古着コミュニティ</p>
+          <p className="hero-label">ファッションコミュニティ</p>
           <h1>
             古着屋をもっと
             <span>気軽に、リアルに</span>
@@ -215,36 +212,6 @@ function App() {
           <p className="hero-copy">
             気になる古着屋を写真つきで投稿。ジャンル・価格・地図から、今日行きたい一軒を見つけよう。
           </p>
-
-          <div className="hero-actions">
-            <button className="primary-button" onClick={scrollToMap} type="button">マップを見る</button>
-            <button className="secondary-button" onClick={() => setIsNewsOpen(true)} type="button">
-              最新の投稿を見る
-            </button>
-          </div>
-        </section>
-
-        <section className="category-strip" aria-label="ジャンル一覧">
-          <button
-            className={selectedGenre === "すべて" ? "category-chip active" : "category-chip"}
-            onClick={() => setSelectedGenre("すべて")}
-            type="button"
-          >
-            すべて <span>{shops.length}</span>
-          </button>
-          {genreOptions.map((genre) => {
-            const count = shops.filter((shop) => shop.genre === genre).length;
-            return (
-              <button
-                key={genre}
-                className={selectedGenre === genre ? "category-chip active" : "category-chip"}
-                onClick={() => setSelectedGenre(genre)}
-                type="button"
-              >
-                {genre} <span>{count}</span>
-              </button>
-            );
-          })}
         </section>
 
         <section className="content-grid" ref={mapSectionRef}>
@@ -254,15 +221,12 @@ function App() {
                 <p className="section-kicker">Map</p>
                 <h2>富大周辺 古着屋マップ</h2>
               </div>
-              <button className="secondary-button compact" onClick={() => setIsGenreFilterOpen(true)} type="button">
-                絞り込み
-              </button>
             </div>
 
             <div className="upload-panel">
               {currentUser ? (
                 <label className="file-label">
-                  投稿画像を選択
+                  投稿画像を選択して、地図をクリックするとお店を登録できます。
                   <input
                     type="file"
                     onChange={(e) => setSelectedFile(e.target.files[0])}
@@ -313,6 +277,62 @@ function App() {
             <section className="ranking-card">
               <div className="panel-header compact-header">
                 <div>
+                  <p className="section-kicker">Tools</p>
+                  <h2>AI / 絞り込み</h2>
+                </div>
+              </div>
+
+              <div className="review-list">
+                <button
+                  className="review-card"
+                  onClick={() => setIsGenreFilterOpen(true)}
+                  type="button"
+                >
+                  <div className="review-thumb"><span>Filter</span></div>
+                  <div>
+                    <strong>価格・ジャンル絞り込み</strong>
+                    <span>条件に合うお店だけ表示します</span>
+                  </div>
+                </button>
+
+                <button className="review-card" type="button">
+                  <div className="review-thumb"><span>AI</span></div>
+                  <div>
+                    <strong>AI 画像判別</strong>
+                    <span>今後追加予定</span>
+                  </div>
+                </button>
+              </div>
+            </section>
+
+            <section className="ranking-card">
+              <div className="panel-header compact-header">
+                <div>
+                  <p className="section-kicker">Hot</p>
+                  <h2>HOT投稿</h2>
+                </div>
+              </div>
+
+              <ol className="trend-list">
+                {trendShops.length === 0 ? (
+                  <li className="empty-text">投稿を待っています</li>
+                ) : (
+                  trendShops.map((shop, index) => (
+                    <li key={`${shop.name}-trend-${index}`}>
+                      <span>{index + 1}</span>
+                      <div>
+                        <strong>{shop.name}</strong>
+                        <small>{shop.price} / {shop.genre}</small>
+                      </div>
+                    </li>
+                  ))
+                )}
+              </ol>
+            </section>
+
+            <section className="ranking-card">
+              <div className="panel-header compact-header">
+                <div>
                   <p className="section-kicker">New</p>
                   <h2>新着投稿</h2>
                 </div>
@@ -344,31 +364,6 @@ function App() {
                   ))
                 )}
               </div>
-            </section>
-
-            <section className="ranking-card">
-              <div className="panel-header compact-header">
-                <div>
-                  <p className="section-kicker">Trend</p>
-                  <h2>注目ショップ</h2>
-                </div>
-              </div>
-
-              <ol className="trend-list">
-                {trendShops.length === 0 ? (
-                  <li className="empty-text">投稿を待っています</li>
-                ) : (
-                  trendShops.map((shop, index) => (
-                    <li key={`${shop.name}-trend-${index}`}>
-                      <span>{index + 1}</span>
-                      <div>
-                        <strong>{shop.name}</strong>
-                        <small>{shop.price} / {shop.genre}</small>
-                      </div>
-                    </li>
-                  ))
-                )}
-              </ol>
             </section>
           </aside>
         </section>
