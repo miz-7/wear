@@ -716,3 +716,19 @@ button {
     height: 380px;
   }
 }
+
+.like-button {
+  width: fit-content;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(242, 231, 213, 0.06);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.like-button.active {
+  background: rgba(143, 63, 43, 0.38);
+  border-color: rgba(194, 122, 69, 0.6);
+}

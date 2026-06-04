@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Float, Integer, String
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, UniqueConstraint
 
 from app.database import Base
 
@@ -22,4 +22,15 @@ class UserModel(Base):
     username = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+
+class ShopLikeModel(Base):
+    __tablename__ = "shop_likes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    shop_id = Column(Integer, ForeignKey("shops.id"), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "shop_id", name="unique_user_shop_like"),
+    )
 

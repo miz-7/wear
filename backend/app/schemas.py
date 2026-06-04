@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class Shop(BaseModel):
+    id: Optional[int] = None
     name: str
     lat: float
     lng: float
@@ -11,8 +12,11 @@ class Shop(BaseModel):
     genre: str
     image: Optional[str] = None
     comment: Optional[str] = None
+    likes_count: int = 0
+    liked_by_me: bool = False
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class UserCreate(BaseModel):
     username: str
