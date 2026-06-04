@@ -154,6 +154,38 @@ function App() {
     setCurrentUser(null);
   };
 
+  const handleLikeShop = async (shopId) => {
+  try {
+    const response = await fetch(`http://localhost:8000/shops/${shopId}/like`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      alert("ログインするといいねできます");
+      return;
+    }
+
+    const data = await response.json();
+
+    setShops((prevShops) =>
+      prevShops.map((shop) =>
+        shop.id === data.shop_id
+          ? {
+              ...shop,
+              likes_count: data.likes_count,
+              liked_by_me: data.liked_by_me,
+            }
+          : shop
+      )
+    );
+  } catch (error) {
+    console.error(error);
+    alert("いいねに失敗しました");
+  }
+};
+
+
   const scrollToMap = () => {
     mapSectionRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -170,7 +202,10 @@ function App() {
   });
 
   const latestShops = [...shops].slice(-3).reverse();
-  const trendShops = [...shops].slice(-5).reverse();
+  const trendShops = [...shops]
+  .sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0))
+  .slice(0, 5);
+
 
   return (
     <div className="app-shell">
@@ -219,7 +254,7 @@ function App() {
             <div className="panel-header">
               <div>
                 <p className="section-kicker">Map</p>
-                <h2>富大周辺 古着屋マップ</h2>
+                <h2>ファッションマップ</h2>
               </div>
             </div>
 
@@ -254,6 +289,14 @@ function App() {
                         <strong>{shop.name}</strong>
                         <span>価格帯: {shop.price}</span>
                         <span>ジャンル: {shop.genre}</span>
+                        <button
+                          className={shop.liked_by_me ? "like-button active" : "like-button"}
+                          onClick={() => handleLikeShop(shop.id)}
+                          type="button"
+                        >
+                          ♥ {shop.likes_count || 0}
+                        </button>
+
 
                         {shop.comment && <p>{shop.comment}</p>}
 
@@ -322,7 +365,7 @@ function App() {
                       <span>{index + 1}</span>
                       <div>
                         <strong>{shop.name}</strong>
-                        <small>{shop.price} / {shop.genre}</small>
+                        <small>{shop.price} / {shop.genre} / ♥ {shop.likes_count || 0}</small>
                       </div>
                     </li>
                   ))
