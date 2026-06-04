@@ -3,9 +3,11 @@ from sqlalchemy import Column, Integer, String, Float, ForeignKey, UniqueConstra
 from app.database import Base
 
 
+
 class ShopModel(Base):
     __tablename__ = "shops"
 
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     lat = Column(Float)

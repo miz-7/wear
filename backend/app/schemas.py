@@ -12,6 +12,8 @@ class Shop(BaseModel):
     genre: str
     image: Optional[str] = None
     comment: Optional[str] = None
+    user_id: Optional[int] = None
+    is_owner: bool = False
     likes_count: int = 0
     liked_by_me: bool = False
 

@@ -48,7 +48,9 @@ function App() {
   const position = [36.692, 137.187];
 
   useEffect(() => {
-    fetch("http://localhost:8000/shops")
+    fetch("http://localhost:8000/shops", {
+      credentials: "include",
+      })
       .then((response) => response.json())
       .then((data) => {
         if (data && Array.isArray(data)) {
@@ -136,8 +138,8 @@ function App() {
       body: JSON.stringify(newShop),
     })
       .then((response) => response.json())
-      .then(() => {
-        setShops((prevShops) => [...prevShops, newShop]);
+      .then((savedShop) => {
+        setShops((prevShops) => [...prevShops, savedShop]);
         setPendingShop(null);
         setIsGenreSelectOpen(false);
         alert("データベースに保存しました");
@@ -182,6 +184,31 @@ function App() {
   } catch (error) {
     console.error(error);
     alert("いいねに失敗しました");
+  }
+};
+
+const handleDeleteShop = async (shopId) => {
+  if (!window.confirm("この投稿を削除しますか？")) return;
+
+  try {
+    const response = await fetch(`http://localhost:8000/shops/${shopId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      alert("自分の投稿だけ削除できます");
+      return;
+    }
+
+    const data = await response.json();
+
+    setShops((prevShops) =>
+      prevShops.filter((shop) => shop.id !== data.shop_id)
+    );
+  } catch (error) {
+    console.error("削除に失敗しました:", error);
+    alert("削除に失敗しました");
   }
 };
 
@@ -296,6 +323,26 @@ function App() {
                         >
                           ♥ {shop.likes_count || 0}
                         </button>
+
+                        {shop.is_owner && (
+                          <button
+                            onClick={() => handleDeleteShop(shop.id)}
+                            type="button"
+                            style={{
+                              width: "fit-content",
+                              padding: "7px 12px",
+                              border: "1px solid rgba(220, 80, 80, 0.7)",
+                              borderRadius: "999px",
+                              backgroundColor: "rgba(160, 45, 45, 0.35)",
+                              color: "#ffe8e8",
+                              fontWeight: "800",
+                              cursor: "pointer",
+                              marginTop: "4px",
+                            }}
+                          >
+                            削除
+                          </button>
+                        )}
 
 
                         {shop.comment && <p>{shop.comment}</p>}

@@ -732,3 +732,18 @@ button {
   background: rgba(143, 63, 43, 0.38);
   border-color: rgba(194, 122, 69, 0.6);
 }
+
+.delete-button {
+  width: fit-content;
+  padding: 7px 12px;
+  border: 1px solid rgba(220, 80, 80, 0.6);
+  border-radius: 999px;
+  background: rgba(160, 45, 45, 0.25);
+  color: #ffe8e8;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  background: rgba(190, 55, 55, 0.45);
+}
