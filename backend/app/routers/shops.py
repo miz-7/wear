@@ -62,6 +62,8 @@ def get_shops(request: Request, db: Session = Depends(get_db)):
             "genre": shop.genre,
             "image": shop.image,
             "comment": shop.comment,
+            "user_id": shop.user_id,
+            "is_owner": bool(current_user and shop.user_id == current_user.id),
             "likes_count": likes_count,
             "liked_by_me": liked_by_me,
         })
@@ -83,6 +85,7 @@ def add_shop(
         genre=shop.genre,
         image=shop.image,
         comment=shop.comment,
+        user_id=current_user.id,
     )
 
     db.add(new_shop)
@@ -98,6 +101,8 @@ def add_shop(
         "genre": new_shop.genre,
         "image": new_shop.image,
         "comment": new_shop.comment,
+        "user_id": new_shop.user_id,
+        "is_owner": True,
         "likes_count": 0,
         "liked_by_me": False,
     }
@@ -152,3 +157,27 @@ def toggle_like_shop(
         "likes_count": likes_count,
         "liked_by_me": liked_by_me,
     }
+
+
+@router.delete("/{shop_id}")
+def delete_shop(
+        shop_id: int,
+        current_user: UserModel = Depends(get_current_user),
+        db: Session = Depends(get_db),
+    ):
+        shop = db.query(ShopModel).filter(ShopModel.id == shop_id).first()
+
+        if shop is None:
+            raise HTTPException(status_code=404, detail="お店が見つかりません")
+
+        if shop.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="自分の投稿だけ削除できます")
+
+        db.query(ShopLikeModel).filter(ShopLikeModel.shop_id == shop_id).delete()
+        db.delete(shop)
+        db.commit()
+
+        return {
+            "message": "削除しました",
+            "shop_id": shop_id,
+        }
